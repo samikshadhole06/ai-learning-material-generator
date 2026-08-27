@@ -1,0 +1,74 @@
+================================================================
+   HOW TO PUSH TO YOUR GITHUB (samikshadhole06)
+================================================================
+
+I've cleared the old credentials. Now you have 2 options:
+
+================================================================
+   OPTION 1: Use Personal Access Token (Recommended - Fast!)
+================================================================
+
+Step 1: Create Token on GitHub
+-------------------------------
+1. Go to: https://github.com/settings/tokens
+2. Click "Generate new token" → "Generate new token (classic)"
+3. Note: "AI Learning Material Generator Push"
+4. Select scope: ✓ repo (check the box)
+5. Click "Generate token"
+6. COPY THE TOKEN (you'll only see it once!)
+
+Step 2: Push with Token
+-----------------------
+Open Command Prompt and run (replace YOUR_TOKEN with the token you copied):
+
+git remote set-url origin https://YOUR_TOKEN@github.com/samikshadhole06/ai-learning-material-generator.git
+git push -u origin main
+
+DONE! Your code will be pushed!
+
+
+================================================================
+   OPTION 2: Use GitHub Desktop (Easiest - Recommended!)
+================================================================
+
+1. Download: https://desktop.github.com/
+2. Install and open
+3. Sign in with samikshadhole06 account
+4. Click "Add" → "Add existing repository"
+5. Browse to: C:\Users\ADMIN\Desktop\NLP Project
+6. Click "Publish repository"
+
+DONE!
+
+
+================================================================
+   OPTION 3: Try Automatic Push (May require browser login)
+================================================================
+
+Double-click: PUSH_TO_GITHUB_NOW.bat
+
+A browser window will open. Login with samikshadhole06.
+
+
+================================================================
+   WHICH ONE SHOULD YOU USE?
+================================================================
+
+- FASTEST: Option 1 (Personal Access Token)
+- EASIEST: Option 2 (GitHub Desktop)
+- AUTOMATIC: Option 3 (Batch file)
+
+Try Option 1 first - it's the quickest!
+
+
+================================================================
+   After Successful Push
+================================================================
+
+Your repository will be at:
+https://github.com/samikshadhole06/ai-learning-material-generator
+
+You can view, share, and manage it from there!
+
+
+================================================================

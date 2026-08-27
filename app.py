@@ -1,5 +1,6 @@
 import streamlit as st
 import traceback
+from datetime import datetime
 
 from pdf_processor import (
     extract_text_from_pdf
@@ -11,10 +12,6 @@ from text_processor import (
     chunk_text
 )
 
-# Embeddings and vector store disabled for cloud deployment
-# from embeddings import generate_embeddings
-# from vector_store import create_vector_store
-
 from notes_generator import (
     generate_notes
 )
@@ -23,8 +20,9 @@ from quiz_generator import (
     generate_quiz
 )
 
-# RAG disabled for cloud deployment - requires embeddings
-# from rag import ask_question
+from pdf_generator import (
+    markdown_to_pdf
+)
 
 
 # --------------------------------------------------
@@ -38,105 +36,238 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better UI
+# Custom CSS for elegant black formal UI
 st.markdown("""
 <style>
-    /* Main theme colors */
+    /* Main theme - Elegant black and white */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+        color: #ffffff;
     }
     
-    /* Sidebar styling */
+    /* Sidebar styling - Clean white */
     [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        border-right: 1px solid #e0e0e0;
     }
     
-    /* Headers */
+    [data-testid="stSidebar"] * {
+        color: #000000 !important;
+    }
+    
+    /* Headers - Gold accent for elegance */
     h1 {
         color: #ffffff !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        font-weight: 700 !important;
+        font-weight: 300 !important;
+        letter-spacing: 2px;
+        font-family: 'Georgia', serif;
+        border-bottom: 2px solid #d4af37;
+        padding-bottom: 10px;
     }
     
-    h2, h3 {
-        color: #2d3748 !important;
-        font-weight: 600 !important;
+    h2 {
+        color: #f0f0f0 !important;
+        font-weight: 400 !important;
+        letter-spacing: 1px;
+        margin-top: 1.5rem;
     }
     
-    /* Buttons */
+    h3 {
+        color: #d0d0d0 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Buttons - Minimalist black with gold hover */
     .stButton>button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        background-color: #000000;
+        color: #ffffff;
+        border: 2px solid #d4af37;
+        padding: 0.75rem 2.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 1px;
+        border-radius: 0px;
         transition: all 0.3s ease;
+        text-transform: uppercase;
     }
     
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        background-color: #d4af37;
+        color: #000000;
+        border-color: #d4af37;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
     }
     
-    /* Metrics */
+    /* Download buttons - White variant */
+    .stDownloadButton>button {
+        background-color: #ffffff;
+        color: #000000;
+        border: 2px solid #000000;
+        padding: 0.6rem 2rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        border-radius: 0px;
+        transition: all 0.3s ease;
+    }
+    
+    .stDownloadButton>button:hover {
+        background-color: #000000;
+        color: #ffffff;
+        border-color: #d4af37;
+    }
+    
+    /* Metrics - Gold accents */
     [data-testid="stMetricValue"] {
-        font-size: 2rem;
-        color: #667eea;
-        font-weight: 700;
+        font-size: 2.5rem;
+        color: #d4af37;
+        font-weight: 300;
     }
     
-    /* Tabs */
+    [data-testid="stMetricLabel"] {
+        color: #cccccc !important;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Tabs - Minimalist design */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 1rem;
+        gap: 0;
         background-color: transparent;
+        border-bottom: 1px solid #333333;
     }
     
     .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 8px 8px 0 0;
+        background-color: transparent;
+        color: #888888;
+        border: none;
         padding: 1rem 2rem;
-        font-weight: 600;
+        font-weight: 500;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background-color: transparent;
+        color: #d4af37;
+        border-bottom: 3px solid #d4af37;
     }
     
-    /* File uploader */
+    /* File uploader - Elegant box */
     [data-testid="stFileUploader"] {
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 12px;
-        padding: 2rem;
-        border: 2px dashed #667eea;
+        background-color: rgba(255, 255, 255, 0.03);
+        border-radius: 0px;
+        padding: 2.5rem;
+        border: 2px dashed #444444;
+        transition: all 0.3s ease;
     }
     
-    /* Expander */
+    [data-testid="stFileUploader"]:hover {
+        border-color: #d4af37;
+        background-color: rgba(212, 175, 55, 0.05);
+    }
+    
+    /* Expander - Clean design */
     .streamlit-expanderHeader {
-        background-color: rgba(102, 126, 234, 0.1);
-        border-radius: 8px;
-        font-weight: 600;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 0px;
+        border-left: 3px solid #d4af37;
+        font-weight: 500;
+        color: #ffffff !important;
+        letter-spacing: 0.5px;
     }
     
-    /* Success/Error boxes */
+    /* Text content - High readability */
+    p, li, span {
+        color: #e0e0e0 !important;
+        line-height: 1.7;
+    }
+    
+    /* Success/Error boxes - Refined */
     .stSuccess {
-        background-color: rgba(72, 187, 120, 0.1);
-        border-left: 4px solid #48bb78;
+        background-color: rgba(76, 175, 80, 0.1);
+        border-left: 4px solid #4caf50;
+        color: #ffffff !important;
+        border-radius: 0px;
     }
     
     .stError {
-        background-color: rgba(245, 101, 101, 0.1);
-        border-left: 4px solid #f56565;
+        background-color: rgba(244, 67, 54, 0.1);
+        border-left: 4px solid #f44336;
+        color: #ffffff !important;
+        border-radius: 0px;
     }
     
-    /* Info box */
+    .stWarning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid #ffc107;
+        color: #ffffff !important;
+        border-radius: 0px;
+    }
+    
+    /* Info box - Gold accent */
     .stInfo {
-        background-color: rgba(102, 126, 234, 0.1);
-        border-left: 4px solid #667eea;
+        background-color: rgba(212, 175, 55, 0.1);
+        border-left: 4px solid #d4af37;
+        color: #ffffff !important;
+        border-radius: 0px;
+    }
+    
+    /* Input fields */
+    .stTextInput>div>div>input {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid #444444;
+        border-radius: 0px;
+    }
+    
+    .stTextInput>div>div>input:focus {
+        border-color: #d4af37;
+        box-shadow: 0 0 0 1px #d4af37;
+    }
+    
+    /* Selectbox */
+    .stSelectbox>div>div>div {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        border: 1px solid #444444;
+        border-radius: 0px;
+    }
+    
+    /* Slider */
+    .stSlider>div>div>div>div {
+        background-color: #d4af37;
+    }
+    
+    /* Markdown content styling */
+    .element-container code {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: #d4af37;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #444444;
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #d4af37;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -147,13 +278,14 @@ st.markdown("""
 # --------------------------------------------------
 
 st.title(
-    "📚 AI-Powered Personalized "
-    "Learning Material Generator"
+    "📚 AI Learning Material Generator"
 )
 
-st.write(
-    "Upload your study material and generate "
-    "concise notes, quizzes, and document-grounded answers."
+st.markdown(
+    "<p style='font-size: 1.1rem; color: #cccccc; margin-top: -10px;'>"
+    "Transform your study materials into comprehensive notes with diagrams, flowcharts, and level-appropriate content."
+    "</p>",
+    unsafe_allow_html=True
 )
 
 
@@ -165,7 +297,6 @@ st.sidebar.header(
     "⚙️ Learning Preferences"
 )
 
-
 learning_level = st.sidebar.selectbox(
     "Learning Level",
     [
@@ -175,6 +306,15 @@ learning_level = st.sidebar.selectbox(
     ]
 )
 
+# Show level-specific features
+level_features = {
+    "Beginner": "✓ Simple language\n✓ Basic concepts\n✓ Clear examples\n✓ Foundational knowledge",
+    "Intermediate": "✓ Technical terms\n✓ Practical applications\n✓ Connected concepts\n✓ Detailed examples",
+    "Advanced": "✓ Advanced theory\n✓ Complex analysis\n✓ In-depth coverage\n✓ Edge cases"
+}
+
+with st.sidebar.expander("📊 Level Features"):
+    st.markdown(level_features[learning_level])
 
 study_mode = st.sidebar.selectbox(
     "Study Mode",
@@ -185,12 +325,26 @@ study_mode = st.sidebar.selectbox(
     ]
 )
 
+# Show mode-specific features
+mode_features = {
+    "Quick Revision": "✓ Concise bullet points\n✓ Key facts\n✓ Quick reference\n✓ Memory aids",
+    "Exam Preparation": "✓ Exam-focused\n✓ Sample questions\n✓ Common topics\n✓ Tips & tricks",
+    "Detailed Study": "✓ In-depth explanations\n✓ Background context\n✓ Extended examples\n✓ Additional insights"
+}
+
+with st.sidebar.expander("🎯 Mode Features"):
+    st.markdown(mode_features[study_mode])
+
 st.sidebar.markdown("---")
-st.sidebar.markdown("### About")
+st.sidebar.markdown("### ℹ️ About")
 st.sidebar.info(
-    "This app uses AI to transform PDFs into personalized learning materials. "
-    "It employs RAG (Retrieval-Augmented Generation) to ensure answers are "
-    "grounded in your uploaded documents."
+    "**AI Learning Material Generator**\n\n"
+    "Transform your PDFs into:\n"
+    "• Comprehensive study notes\n"
+    "• Visual diagrams & flowcharts\n"
+    "• Practice quizzes\n"
+    "• Level-appropriate content\n\n"
+    "Powered by Gemini AI"
 )
 
 
@@ -374,18 +528,25 @@ if (
     with tab1:
 
         st.header(
-            "📝 Smart Notes Generator"
+            "📝 Professional Study Notes"
         )
 
-        st.write(
-            "Generate concise, exam-oriented "
-            "notes from your uploaded material."
+        st.markdown(
+            "<p style='color: #cccccc;'>Generate comprehensive, level-appropriate notes with diagrams, flowcharts, and visual aids.</p>",
+            unsafe_allow_html=True
         )
-
-        if st.button(
-            "Generate Smart Notes",
-            key="notes_button"
-        ):
+        
+        # Add note format options
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            generate_btn = st.button(
+                "Generate Smart Notes",
+                key="notes_button",
+                use_container_width=True
+            )
+        
+        if generate_btn:
 
             # Use chunks as context
             context = "\n\n".join(
@@ -394,7 +555,7 @@ if (
 
             try:
                 with st.spinner(
-                    "Generating your notes..."
+                    "✨ Generating your personalized notes with diagrams and flowcharts..."
                 ):
 
                     notes = generate_notes(
@@ -403,19 +564,52 @@ if (
                         learning_level,
                         study_mode
                     )
+                    
+                    # Store notes in session state
+                    st.session_state.generated_notes = notes
 
-                st.markdown(notes)
-                
-                # Download button
-                st.download_button(
-                    label="📥 Download Notes",
-                    data=notes,
-                    file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}.md",
-                    mime="text/markdown"
-                )
+                st.success("✅ Notes generated successfully!")
                 
             except Exception as e:
                 st.error(f"❌ Error generating notes: {str(e)}")
+        
+        # Display and download options if notes exist
+        if 'generated_notes' in st.session_state:
+            
+            st.markdown("---")
+            st.markdown("### 📄 Generated Notes")
+            
+            # Display the notes
+            st.markdown(st.session_state.generated_notes)
+            
+            st.markdown("---")
+            st.markdown("### 💾 Download Options")
+            
+            col_dl1, col_dl2 = st.columns(2)
+            
+            with col_dl1:
+                # Markdown download
+                st.download_button(
+                    label="📥 Download as Markdown",
+                    data=st.session_state.generated_notes,
+                    file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                    mime="text/markdown",
+                    use_container_width=True
+                )
+            
+            with col_dl2:
+                # PDF download
+                try:
+                    pdf_data = markdown_to_pdf(st.session_state.generated_notes)
+                    st.download_button(
+                        label="📥 Download as PDF",
+                        data=pdf_data,
+                        file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.warning(f"PDF generation currently unavailable: {str(e)}")
 
 
     # ==================================================

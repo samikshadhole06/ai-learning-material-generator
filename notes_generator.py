@@ -1,46 +1,105 @@
 from gemini_service import generate_response
 
 
-def generate_notes(
-    context,
-    keywords,
-    learning_level,
-    study_mode
-):
+def generate_notes(context, keywords, learning_level, study_mode):
+    """
+    Generate comprehensive, level-appropriate study notes with diagrams and flowcharts.
+    """
+    
+    # Customize prompt based on learning level
+    level_instructions = {
+        "Beginner": """
+- Use simple, clear language
+- Define all technical terms
+- Include basic examples
+- Focus on fundamental concepts
+- Use analogies to explain complex ideas
+""",
+        "Intermediate": """
+- Balance technical terminology with explanations
+- Include practical applications
+- Connect concepts together
+- Provide detailed examples
+- Include comparative analysis
+""",
+        "Advanced": """
+- Use precise technical language
+- Include advanced concepts and theory
+- Analyze complex relationships
+- Provide in-depth analysis
+- Include edge cases and nuances
+"""
+    }
+    
+    # Customize based on study mode
+    mode_instructions = {
+        "Quick Revision": """
+- Create concise bullet points
+- Focus on key facts and formulas
+- Include quick-reference tables
+- Highlight must-know information
+- Use memory aids and mnemonics
+""",
+        "Exam Preparation": """
+- Focus on exam-relevant topics
+- Include sample questions within notes
+- Highlight commonly tested concepts
+- Provide tips and tricks
+- Create comprehensive coverage
+""",
+        "Detailed Study": """
+- Provide in-depth explanations
+- Include background context
+- Add extended examples
+- Explore related concepts
+- Include additional insights
+"""
+    }
 
-    prompt = f"""
-You are an academic learning assistant.
+    prompt = f"""You are an expert academic tutor creating professional study notes.
 
-Generate concise, exam-oriented study notes
-from the provided study material.
+STUDENT PROFILE:
+- Learning Level: {learning_level}
+- Study Mode: {study_mode}
 
-STUDENT LEVEL:
-{learning_level}
+LEVEL-SPECIFIC APPROACH:
+{level_instructions[learning_level]}
 
-STUDY MODE:
-{study_mode}
+MODE-SPECIFIC APPROACH:
+{mode_instructions[study_mode]}
 
-IMPORTANT KEYWORDS:
-{", ".join(keywords)}
+KEY TOPICS TO COVER:
+{", ".join(keywords[:10])}
 
-STRICT RULES:
+FORMATTING REQUIREMENTS:
 
-1. Use ONLY the provided study material.
-2. Do not introduce outside information.
-3. Do not invent facts.
-4. Keep important definitions.
-5. Keep important concepts.
-6. Keep important examples present in the material.
-7. Remove unnecessary repetition.
-8. Use headings and bullet points.
-9. Make the content easy to revise.
-10. Focus on exam-relevant information.
+1. **Structure**: Use clear hierarchy with main topics, subtopics, and key points
+
+2. **Visual Elements**: Include these where relevant:
+   - Create ASCII flowcharts using arrows (→, ↓, ←, ↑) and boxes
+   - Use ASCII diagrams with lines, boxes (┌─┐│└┘), and connecting symbols
+   - Create process flows showing step-by-step sequences
+   - Use tables for comparisons
+   - Include concept maps showing relationships
+
+3. **Content Organization**:
+   - Start with an overview/introduction
+   - Use numbered sections for main topics
+   - Use bullet points (•) for key points
+   - Use indentation for hierarchies
+   - Include "💡 Key Insight" callouts for important concepts
+   - Add "⚠️ Common Mistake" warnings where appropriate
+   - Use "📌 Remember" for critical facts
+
+4. **Examples**: Provide relevant examples for each major concept
+
+5. **Summary**: End with a concise summary of key takeaways
 
 STUDY MATERIAL:
-
 {context}
 
-Generate the final study notes.
-"""
+Generate comprehensive, well-structured study notes with visual elements (flowcharts, diagrams, tables) that are appropriate for a {learning_level} student in {study_mode} mode.
 
-    return generate_response(prompt)
+Make the notes visually engaging using ASCII art for diagrams and flowcharts. Use markdown formatting extensively."""
+
+    return generate_response(prompt, temperature=0.5)
