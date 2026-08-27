@@ -1,6 +1,7 @@
 import streamlit as st
 import traceback
 from datetime import datetime
+import json
 
 from pdf_processor import (
     extract_text_from_pdf
@@ -36,219 +37,278 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for elegant black formal UI
+# Custom CSS for modern, clean UI
 st.markdown("""
 <style>
-    /* Main theme - Elegant black and white */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Modern gradient background */
     .stApp {
-        background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-        color: #ffffff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Inter', sans-serif;
     }
     
-    /* Sidebar styling - Clean white */
+    /* Main content area - card style */
+    .main .block-container {
+        padding: 2rem;
+        max-width: 1200px;
+    }
+    
+    /* Clean white sidebar */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
-        border-right: 1px solid #e0e0e0;
+        background: white;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
     
     [data-testid="stSidebar"] * {
-        color: #000000 !important;
+        color: #1a1a1a !important;
     }
     
-    /* Headers - Gold accent for elegance */
+    /* Headers - Modern style */
     h1 {
-        color: #ffffff !important;
-        font-weight: 300 !important;
-        letter-spacing: 2px;
-        font-family: 'Georgia', serif;
-        border-bottom: 2px solid #d4af37;
-        padding-bottom: 10px;
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 2.5rem !important;
+        margin-bottom: 0.5rem !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     h2 {
-        color: #f0f0f0 !important;
-        font-weight: 400 !important;
-        letter-spacing: 1px;
-        margin-top: 1.5rem;
+        color: white !important;
+        font-weight: 600 !important;
+        font-size: 1.8rem !important;
+        margin-top: 2rem !important;
     }
     
     h3 {
-        color: #d0d0d0 !important;
+        color: white !important;
         font-weight: 500 !important;
+        font-size: 1.3rem !important;
     }
     
-    /* Buttons - Minimalist black with gold hover */
+    /* Modern buttons */
     .stButton>button {
-        background-color: #000000;
-        color: #ffffff;
-        border: 2px solid #d4af37;
-        padding: 0.75rem 2.5rem;
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 0.75rem 2rem;
         font-size: 1rem;
-        font-weight: 500;
-        letter-spacing: 1px;
-        border-radius: 0px;
+        font-weight: 600;
+        border-radius: 50px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
-        text-transform: uppercase;
+        width: 100%;
     }
     
     .stButton>button:hover {
-        background-color: #d4af37;
-        color: #000000;
-        border-color: #d4af37;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
     }
     
-    /* Download buttons - White variant */
+    /* Download buttons */
     .stDownloadButton>button {
-        background-color: #ffffff;
-        color: #000000;
-        border: 2px solid #000000;
-        padding: 0.6rem 2rem;
-        font-size: 0.95rem;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        border-radius: 0px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid white;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 50px;
         transition: all 0.3s ease;
     }
     
     .stDownloadButton>button:hover {
-        background-color: #000000;
-        color: #ffffff;
-        border-color: #d4af37;
+        background: white;
+        color: #667eea;
     }
     
-    /* Metrics - Gold accents */
+    /* Metrics - Card style */
+    [data-testid="stMetric"] {
+        background: rgba(255,255,255,0.95);
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
     [data-testid="stMetricValue"] {
-        font-size: 2.5rem;
-        color: #d4af37;
-        font-weight: 300;
+        font-size: 2.5rem !important;
+        color: #667eea !important;
+        font-weight: 700 !important;
     }
     
     [data-testid="stMetricLabel"] {
-        color: #cccccc !important;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        color: #666 !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
     }
     
-    /* Tabs - Minimalist design */
+    /* Tabs - Clean modern style */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 0;
-        background-color: transparent;
-        border-bottom: 1px solid #333333;
+        gap: 10px;
+        background: transparent;
     }
     
     .stTabs [data-baseweb="tab"] {
-        background-color: transparent;
-        color: #888888;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
         border: none;
-        padding: 1rem 2rem;
-        font-weight: 500;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        font-size: 0.9rem;
     }
     
     .stTabs [aria-selected="true"] {
-        background-color: transparent;
-        color: #d4af37;
-        border-bottom: 3px solid #d4af37;
+        background: white;
+        color: #667eea;
     }
     
-    /* File uploader - Elegant box */
+    /* File uploader - Modern card */
     [data-testid="stFileUploader"] {
-        background-color: rgba(255, 255, 255, 0.03);
-        border-radius: 0px;
-        padding: 2.5rem;
-        border: 2px dashed #444444;
-        transition: all 0.3s ease;
+        background: rgba(255,255,255,0.95);
+        border-radius: 15px;
+        padding: 2rem;
+        border: 3px dashed rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     [data-testid="stFileUploader"]:hover {
-        border-color: #d4af37;
-        background-color: rgba(212, 175, 55, 0.05);
+        border-color: #667eea;
+        background: white;
     }
     
-    /* Expander - Clean design */
+    /* Expander - Card style */
     .streamlit-expanderHeader {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 0px;
-        border-left: 3px solid #d4af37;
-        font-weight: 500;
-        color: #ffffff !important;
-        letter-spacing: 0.5px;
+        background: rgba(255,255,255,0.95);
+        border-radius: 10px;
+        font-weight: 600;
+        color: #667eea !important;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    /* Text content - High readability */
-    p, li, span {
-        color: #e0e0e0 !important;
-        line-height: 1.7;
+    details[open] > .streamlit-expanderHeader {
+        border-radius: 10px 10px 0 0;
     }
     
-    /* Success/Error boxes - Refined */
+    /* Messages */
+    .stSuccess, .stError, .stWarning, .stInfo {
+        background: rgba(255,255,255,0.95);
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 4px solid;
+        color: #1a1a1a !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
     .stSuccess {
-        background-color: rgba(76, 175, 80, 0.1);
-        border-left: 4px solid #4caf50;
-        color: #ffffff !important;
-        border-radius: 0px;
+        border-left-color: #00c851;
     }
     
     .stError {
-        background-color: rgba(244, 67, 54, 0.1);
-        border-left: 4px solid #f44336;
-        color: #ffffff !important;
-        border-radius: 0px;
+        border-left-color: #ff4444;
     }
     
     .stWarning {
-        background-color: rgba(255, 193, 7, 0.1);
-        border-left: 4px solid #ffc107;
-        color: #ffffff !important;
-        border-radius: 0px;
+        border-left-color: #ffbb33;
     }
     
-    /* Info box - Gold accent */
     .stInfo {
-        background-color: rgba(212, 175, 55, 0.1);
-        border-left: 4px solid #d4af37;
-        color: #ffffff !important;
-        border-radius: 0px;
+        border-left-color: #33b5e5;
+    }
+    
+    /* Text content in white cards */
+    p, li, span, div {
+        color: white;
     }
     
     /* Input fields */
-    .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        border: 1px solid #444444;
-        border-radius: 0px;
+    .stTextInput>div>div>input, .stSelectbox>div>div>div {
+        background: white;
+        color: #1a1a1a;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 0.75rem;
     }
     
     .stTextInput>div>div>input:focus {
-        border-color: #d4af37;
-        box-shadow: 0 0 0 1px #d4af37;
-    }
-    
-    /* Selectbox */
-    .stSelectbox>div>div>div {
-        background-color: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        border: 1px solid #444444;
-        border-radius: 0px;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
     }
     
     /* Slider */
     .stSlider>div>div>div>div {
-        background-color: #d4af37;
+        background: #667eea;
     }
     
-    /* Markdown content styling */
-    .element-container code {
-        background-color: rgba(255, 255, 255, 0.08);
-        color: #d4af37;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: 'Courier New', monospace;
+    /* Flashcard styling */
+    .flashcard {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .flashcard:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+    }
+    
+    .flashcard-front {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+    }
+    
+    .flashcard-options {
+        margin: 1rem 0;
+    }
+    
+    .flashcard-option {
+        background: #f5f5f5;
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 10px;
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .flashcard-option:hover {
+        background: #e8e8e8;
+        border-left-color: #667eea;
+    }
+    
+    .flashcard-option.correct {
+        background: #d4edda;
+        border-left-color: #00c851;
+        color: #155724;
+    }
+    
+    .flashcard-option.incorrect {
+        background: #f8d7da;
+        border-left-color: #ff4444;
+        color: #721c24;
+    }
+    
+    /* Content cards */
+    .content-card {
+        background: rgba(255,255,255,0.95);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: #1a1a1a !important;
+    }
+    
+    .content-card * {
+        color: #1a1a1a !important;
     }
     
     /* Scrollbar */
@@ -258,16 +318,17 @@ st.markdown("""
     }
     
     ::-webkit-scrollbar-track {
-        background: #1a1a1a;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #444444;
-        border-radius: 5px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: #d4af37;
+        background: rgba(255,255,255,0.5);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -278,12 +339,12 @@ st.markdown("""
 # --------------------------------------------------
 
 st.title(
-    "📚 AI Learning Material Generator"
+    "📚 Smart Study Assistant"
 )
 
 st.markdown(
-    "<p style='font-size: 1.1rem; color: #cccccc; margin-top: -10px;'>"
-    "Transform your study materials into comprehensive notes with diagrams, flowcharts, and level-appropriate content."
+    "<p style='font-size: 1.2rem; opacity: 0.9; margin-top: -15px;'>"
+    "Transform PDFs into comprehensive notes and interactive quizzes"
     "</p>",
     unsafe_allow_html=True
 )
@@ -294,58 +355,40 @@ st.markdown(
 # --------------------------------------------------
 
 st.sidebar.header(
-    "⚙️ Learning Preferences"
+    "⚙️ Study Settings"
 )
-
-learning_level = st.sidebar.selectbox(
-    "Learning Level",
-    [
-        "Beginner",
-        "Intermediate",
-        "Advanced"
-    ]
-)
-
-# Show level-specific features
-level_features = {
-    "Beginner": "✓ Simple language\n✓ Basic concepts\n✓ Clear examples\n✓ Foundational knowledge",
-    "Intermediate": "✓ Technical terms\n✓ Practical applications\n✓ Connected concepts\n✓ Detailed examples",
-    "Advanced": "✓ Advanced theory\n✓ Complex analysis\n✓ In-depth coverage\n✓ Edge cases"
-}
-
-with st.sidebar.expander("📊 Level Features"):
-    st.markdown(level_features[learning_level])
-
-study_mode = st.sidebar.selectbox(
-    "Study Mode",
-    [
-        "Quick Revision",
-        "Exam Preparation",
-        "Detailed Study"
-    ]
-)
-
-# Show mode-specific features
-mode_features = {
-    "Quick Revision": "✓ Concise bullet points\n✓ Key facts\n✓ Quick reference\n✓ Memory aids",
-    "Exam Preparation": "✓ Exam-focused\n✓ Sample questions\n✓ Common topics\n✓ Tips & tricks",
-    "Detailed Study": "✓ In-depth explanations\n✓ Background context\n✓ Extended examples\n✓ Additional insights"
-}
-
-with st.sidebar.expander("🎯 Mode Features"):
-    st.markdown(mode_features[study_mode])
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ℹ️ About")
-st.sidebar.info(
-    "**AI Learning Material Generator**\n\n"
-    "Transform your PDFs into:\n"
-    "• Comprehensive study notes\n"
-    "• Visual diagrams & flowcharts\n"
-    "• Practice quizzes\n"
-    "• Level-appropriate content\n\n"
-    "Powered by Gemini AI"
+
+learning_level = st.sidebar.radio(
+    "📊 Learning Level",
+    ["Beginner", "Intermediate", "Advanced"],
+    help="Choose based on your current knowledge"
 )
+
+st.sidebar.markdown("---")
+
+study_mode = st.sidebar.radio(
+    "🎯 Study Mode",
+    ["Quick Revision", "Exam Preparation", "Detailed Study"],
+    help="Select your study goal"
+)
+
+st.sidebar.markdown("---")
+
+# Feature descriptions
+with st.sidebar.expander("ℹ️ What do these mean?"):
+    st.markdown("""
+    **Learning Levels:**
+    - **Beginner**: Simple explanations, basic concepts
+    - **Intermediate**: Balanced technical content
+    - **Advanced**: Complex theory, in-depth analysis
+    
+    **Study Modes:**
+    - **Quick Revision**: Concise key points
+    - **Exam Preparation**: Focus on testable material
+    - **Detailed Study**: Comprehensive coverage
+    """)
 
 
 # --------------------------------------------------
@@ -577,22 +620,22 @@ if (
         if 'generated_notes' in st.session_state:
             
             st.markdown("---")
-            st.markdown("### 📄 Generated Notes")
             
-            # Display the notes
+            # Display the notes in a clean card
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
             st.markdown(st.session_state.generated_notes)
+            st.markdown('</div>', unsafe_allow_html=True)
             
             st.markdown("---")
-            st.markdown("### 💾 Download Options")
             
             col_dl1, col_dl2 = st.columns(2)
             
             with col_dl1:
                 # Markdown download
                 st.download_button(
-                    label="📥 Download as Markdown",
+                    label="📥 Download Markdown",
                     data=st.session_state.generated_notes,
-                    file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                    file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d')}.md",
                     mime="text/markdown",
                     use_container_width=True
                 )
@@ -602,42 +645,47 @@ if (
                 try:
                     pdf_data = markdown_to_pdf(st.session_state.generated_notes)
                     st.download_button(
-                        label="📥 Download as PDF",
+                        label="📥 Download PDF",
                         data=pdf_data,
-                        file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                        file_name=f"notes_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d')}.pdf",
                         mime="application/pdf",
                         use_container_width=True
                     )
                 except Exception as e:
-                    st.warning(f"PDF generation currently unavailable: {str(e)}")
+                    st.info("PDF export coming soon!")
 
 
     # ==================================================
-    # FEATURE 2: QUIZ
+    # FEATURE 2: INTERACTIVE QUIZ FLASHCARDS
     # ==================================================
 
     with tab2:
 
         st.header(
-            "🧠 Quiz & MCQ Generator"
+            "🧠 Interactive Quiz Flashcards"
         )
 
-        difficulty = st.selectbox(
-            "Select Difficulty",
-            [
-                "Easy",
-                "Medium",
-                "Hard"
-            ],
-            key="quiz_difficulty"
+        st.markdown(
+            "<p style='font-size: 1.1rem; opacity: 0.9;'>Test your knowledge with interactive flashcard-style questions.</p>",
+            unsafe_allow_html=True
         )
 
-        number_of_questions = st.slider(
-            "Number of Questions",
-            min_value=3,
-            max_value=10,
-            value=5
-        )
+        col_q1, col_q2 = st.columns(2)
+
+        with col_q1:
+            difficulty = st.selectbox(
+                "Difficulty Level",
+                ["Easy", "Medium", "Hard"],
+                key="quiz_difficulty"
+            )
+
+        with col_q2:
+            number_of_questions = st.slider(
+                "Number of Questions",
+                min_value=3,
+                max_value=10,
+                value=5
+            )
 
         if st.button(
             "Generate Quiz",
@@ -650,27 +698,107 @@ if (
 
             try:
                 with st.spinner(
-                    "Generating questions..."
+                    "🎯 Creating your personalized quiz flashcards..."
                 ):
 
-                    quiz = generate_quiz(
+                    questions = generate_quiz(
                         context,
                         difficulty,
                         number_of_questions
                     )
-
-                st.markdown(quiz)
-                
-                # Download button
-                st.download_button(
-                    label="📥 Download Quiz",
-                    data=quiz,
-                    file_name=f"quiz_{uploaded_file.name.replace('.pdf', '')}.md",
-                    mime="text/markdown"
-                )
-                
+                    
+                    if questions:
+                        st.session_state.quiz_questions = questions
+                        st.session_state.quiz_answers = {}
+                        st.session_state.quiz_submitted = False
+                        st.success(f"✅ Generated {len(questions)} questions!")
+                    else:
+                        st.error("❌ Failed to generate quiz. Please try again.")
+                        
             except Exception as e:
                 st.error(f"❌ Error generating quiz: {str(e)}")
+
+        # Display flashcards if quiz exists
+        if 'quiz_questions' in st.session_state and st.session_state.quiz_questions:
+            
+            st.markdown("---")
+            
+            # Quiz interface
+            for idx, q in enumerate(st.session_state.quiz_questions):
+                
+                # Create flashcard HTML
+                st.markdown(f"""
+                <div class="flashcard">
+                    <div class="flashcard-front">
+                        <strong>Question {idx + 1}:</strong> {q['question']}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Radio buttons for options
+                answer_key = f"q_{idx}"
+                options_list = [f"{key}. {value}" for key, value in q['options'].items()]
+                
+                selected = st.radio(
+                    "Select your answer:",
+                    options_list,
+                    key=answer_key,
+                    label_visibility="collapsed"
+                )
+                
+                # Store answer
+                if selected:
+                    st.session_state.quiz_answers[idx] = selected[0]  # Get just the letter (A, B, C, or D)
+                
+                # Show answer if submitted
+                if st.session_state.get('quiz_submitted', False):
+                    user_answer = st.session_state.quiz_answers.get(idx, "")
+                    correct_answer = q['correct_answer']
+                    
+                    if user_answer == correct_answer:
+                        st.success(f"✅ Correct! The answer is {correct_answer}.")
+                    else:
+                        st.error(f"❌ Incorrect. The correct answer is {correct_answer}.")
+                    
+                    # Show explanation
+                    with st.expander("📖 Explanation"):
+                        st.write(q['explanation'])
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Submit button
+            if not st.session_state.get('quiz_submitted', False):
+                col_submit1, col_submit2, col_submit3 = st.columns([1, 1, 1])
+                with col_submit2:
+                    if st.button("Submit Quiz", key="submit_quiz", use_container_width=True):
+                        st.session_state.quiz_submitted = True
+                        st.rerun()
+            else:
+                # Show score
+                correct_count = sum(
+                    1 for idx, q in enumerate(st.session_state.quiz_questions)
+                    if st.session_state.quiz_answers.get(idx, "") == q['correct_answer']
+                )
+                total = len(st.session_state.quiz_questions)
+                percentage = (correct_count / total) * 100
+                
+                st.markdown("---")
+                st.markdown(f"""
+                <div class="content-card" style="text-align: center;">
+                    <h2 style="color: #667eea !important;">📊 Your Score</h2>
+                    <h1 style="color: #667eea !important; font-size: 3rem;">{correct_count}/{total}</h1>
+                    <p style="font-size: 1.5rem; color: #666 !important;">{percentage:.1f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Try again button
+                col_again1, col_again2, col_again3 = st.columns([1, 1, 1])
+                with col_again2:
+                    if st.button("Try New Quiz", key="new_quiz", use_container_width=True):
+                        del st.session_state.quiz_questions
+                        del st.session_state.quiz_answers
+                        del st.session_state.quiz_submitted
+                        st.rerun()
 
 
     # ==================================================
