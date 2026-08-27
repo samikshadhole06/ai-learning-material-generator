@@ -23,7 +23,6 @@ ENV/
 # Data files
 data/
 *.pdf
-*.txt
 
 # Streamlit
 .streamlit/
