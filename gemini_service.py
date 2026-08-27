@@ -6,6 +6,7 @@ from config import GEMINI_API_KEY, GEMINI_MODEL
 def generate_response(prompt, temperature=0.7):
     """
     Send a prompt to Gemini and return the response using REST API.
+    Works with new AQ. format API keys (authorization keys).
     
     Args:
         prompt (str): The prompt to send to Gemini
@@ -18,12 +19,11 @@ def generate_response(prompt, temperature=0.7):
         # Use the REST API endpoint
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
         
+        # For new AQ. format keys, pass API key in header
         headers = {
             "Content-Type": "application/json",
+            "x-goog-api-key": GEMINI_API_KEY
         }
-        
-        # Add API key to URL as query parameter
-        url_with_key = f"{url}?key={GEMINI_API_KEY}"
         
         payload = {
             "contents": [{
@@ -39,7 +39,7 @@ def generate_response(prompt, temperature=0.7):
             }
         }
         
-        response = requests.post(url_with_key, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         
         result = response.json()
