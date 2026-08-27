@@ -11,13 +11,9 @@ from text_processor import (
     chunk_text
 )
 
-from embeddings import (
-    generate_embeddings
-)
-
-from vector_store import (
-    create_vector_store
-)
+# Embeddings and vector store disabled for cloud deployment
+# from embeddings import generate_embeddings
+# from vector_store import create_vector_store
 
 from notes_generator import (
     generate_notes
@@ -27,9 +23,8 @@ from quiz_generator import (
     generate_quiz
 )
 
-from rag import (
-    ask_question
-)
+# RAG disabled for cloud deployment - requires embeddings
+# from rag import ask_question
 
 
 # --------------------------------------------------
@@ -421,15 +416,18 @@ if (
             else:
 
                 try:
-                    with st.spinner(
-                        "Searching your study material..."
-                    ):
-
-                        answer, sources = ask_question(
-                            question,
-                            st.session_state.index,
-                            st.session_state.chunks
-                        )
+                    # RAG disabled for cloud deployment
+                    st.warning("⚠️ Q&A feature requires advanced dependencies not available in free cloud deployment. Notes and Quiz features work perfectly!")
+                    answer = "This feature requires sentence-transformers and FAISS which are too large for free Streamlit Cloud. Please use Notes or Quiz features instead!"
+                    sources = []
+                    
+                    # Original code (disabled):
+                    # with st.spinner("Searching your study material..."):
+                    #     answer, sources = ask_question(
+                    #         question,
+                    #         st.session_state.index,
+                    #         st.session_state.chunks
+                    #     )
 
                     st.subheader(
                         "🤖 Answer"
