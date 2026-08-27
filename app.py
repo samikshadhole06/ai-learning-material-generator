@@ -155,15 +155,11 @@ if uploaded_file:
                     st.error("❌ Failed to create text chunks. Please try a different PDF.")
                     st.stop()
 
-                # 5. Generate embeddings
-                embeddings = generate_embeddings(
-                    chunks
-                )
-
-                # 6. Create FAISS index
-                index = create_vector_store(
-                    embeddings
-                )
+                # Embeddings disabled for cloud deployment
+                # embeddings = generate_embeddings(chunks)
+                # index = create_vector_store(embeddings)
+                embeddings = None
+                index = None
 
                 # Store everything
                 st.session_state.file_id = file_id
