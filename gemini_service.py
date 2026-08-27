@@ -1,10 +1,8 @@
-from google import genai
+import google.generativeai as genai
 from config import GEMINI_API_KEY, GEMINI_MODEL
 
-# Initialize Gemini client
-client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
+# Configure Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
 
 
 def generate_response(prompt, temperature=0.7):
@@ -19,10 +17,13 @@ def generate_response(prompt, temperature=0.7):
         str: Generated response text
     """
     try:
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-            config={
+        # Create model instance
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        
+        # Generate response
+        response = model.generate_content(
+            prompt,
+            generation_config={
                 'temperature': temperature,
                 'top_p': 0.95,
                 'top_k': 40,

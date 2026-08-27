@@ -36,4 +36,4 @@ CHUNK_OVERLAP = 100
 TOP_K = 4
 
 # Gemini model configuration
-GEMINI_MODEL = "gemini-2.0-flash-exp"
+GEMINI_MODEL = "gemini-1.5-flash"
