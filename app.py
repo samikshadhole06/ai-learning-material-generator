@@ -34,8 +34,112 @@ from quiz_generator import (
 st.set_page_config(
     page_title="AI Learning Material Generator",
     page_icon="📚",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Custom CSS for better UI
+st.markdown("""
+<style>
+    /* Main theme colors */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Headers */
+    h1 {
+        color: #ffffff !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        font-weight: 700 !important;
+    }
+    
+    h2, h3 {
+        color: #2d3748 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Buttons */
+    .stButton>button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem;
+        color: #667eea;
+        font-weight: 700;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 1rem;
+        background-color: transparent;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 8px 8px 0 0;
+        padding: 1rem 2rem;
+        font-weight: 600;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 2rem;
+        border: 2px dashed #667eea;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: rgba(102, 126, 234, 0.1);
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    /* Success/Error boxes */
+    .stSuccess {
+        background-color: rgba(72, 187, 120, 0.1);
+        border-left: 4px solid #48bb78;
+    }
+    
+    .stError {
+        background-color: rgba(245, 101, 101, 0.1);
+        border-left: 4px solid #f56565;
+    }
+    
+    /* Info box */
+    .stInfo {
+        background-color: rgba(102, 126, 234, 0.1);
+        border-left: 4px solid #667eea;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 
 # --------------------------------------------------
