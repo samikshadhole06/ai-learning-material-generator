@@ -4,10 +4,6 @@ streamlit>=1.28.0
 # PDF processing
 pymupdf>=1.23.0
 
-# NLP
-spacy>=3.7.0
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
-
 # Gemini AI
 google-genai>=0.2.0
 
@@ -15,6 +11,5 @@ google-genai>=0.2.0
 python-dotenv>=1.0.0
 numpy>=1.24.0
 
-# Note: sentence-transformers and faiss-cpu removed for cloud deployment
-# The app will work for PDF processing, keyword extraction
-# Notes/Quiz features will be limited without these
+# Note: Removed spacy, sentence-transformers, faiss-cpu for cloud deployment
+# App will use basic text processing instead
