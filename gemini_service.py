@@ -3,7 +3,7 @@ import json
 from config import GEMINI_API_KEY, GEMINI_MODEL
 
 
-def generate_response(prompt, temperature=0.7):
+def generate_response(prompt, temperature=0.7, max_tokens=8000):
     """
     Send a prompt to Gemini and return the response using REST API.
     Works with new AQ. format API keys (authorization keys).
@@ -11,6 +11,7 @@ def generate_response(prompt, temperature=0.7):
     Args:
         prompt (str): The prompt to send to Gemini
         temperature (float): Controls randomness (0.0-1.0)
+        max_tokens (int): Maximum output tokens (default 8000 for longer responses)
         
     Returns:
         str: Generated response text
@@ -35,7 +36,7 @@ def generate_response(prompt, temperature=0.7):
                 "temperature": temperature,
                 "topP": 0.95,
                 "topK": 40,
-                "maxOutputTokens": 2048,
+                "maxOutputTokens": max_tokens,
             }
         }
         

@@ -29,8 +29,8 @@ if not GEMINI_API_KEY or GEMINI_API_KEY == "your_gemini_api_key_here":
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 # Text chunking configuration
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = 1000  # Increased for more context
+CHUNK_OVERLAP = 200  # Increased overlap
 
 # RAG configuration
 TOP_K = 4
