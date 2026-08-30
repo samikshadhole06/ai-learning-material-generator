@@ -21,6 +21,18 @@ from quiz_generator import (
     generate_quiz
 )
 
+from flashcard_generator import (
+    generate_flashcards
+)
+
+from summary_generator import (
+    generate_summary
+)
+
+from terms_extractor import (
+    extract_key_terms
+)
+
 from pdf_generator import (
     markdown_to_pdf
 )
@@ -606,13 +618,16 @@ if (
 
 
     # --------------------------------------------------
-    # THREE MAIN FEATURES
+    # SIX MAIN FEATURES
     # --------------------------------------------------
 
-    tab1, tab2, tab3 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
         [
             "Study Notes",
             "Practice Quiz",
+            "Flashcards",
+            "Summary",
+            "Key Terms",
             "Ask Questions"
         ]
     )
@@ -856,10 +871,285 @@ if (
 
 
     # ==================================================
-    # FEATURE 3: AI STUDY ASSISTANT
+    # FEATURE 3: FLASHCARDS
     # ==================================================
 
     with tab3:
+
+        st.header(
+            "Study Flashcards"
+        )
+
+        st.markdown(
+            "<p style='opacity: 0.7; font-weight: 300;'>Generate flashcards for memorization with front and back.</p>",
+            unsafe_allow_html=True
+        )
+
+        num_flashcards = st.slider(
+            "Number of Flashcards",
+            min_value=5,
+            max_value=20,
+            value=10,
+            key="num_flashcards"
+        )
+
+        if st.button(
+            "Generate Flashcards",
+            key="flashcards_button"
+        ):
+
+            context = "\n\n".join(
+                st.session_state.chunks
+            )
+
+            try:
+                with st.spinner(
+                    "Creating your study flashcards..."
+                ):
+
+                    flashcards = generate_flashcards(
+                        context,
+                        st.session_state.keywords,
+                        num_flashcards
+                    )
+                    
+                    if flashcards:
+                        st.session_state.flashcards = flashcards
+                        st.success(f"Generated {len(flashcards)} flashcards")
+                    else:
+                        st.error("Failed to generate flashcards. Please try again.")
+                        
+            except Exception as e:
+                st.error(f"Error generating flashcards: {str(e)}")
+
+        # Display flashcards if they exist
+        if 'flashcards' in st.session_state and st.session_state.flashcards:
+            
+            st.markdown("---")
+            
+            # Initialize flip state if not exists
+            if 'flipped_cards' not in st.session_state:
+                st.session_state.flipped_cards = set()
+            
+            # Display flashcards
+            for idx, card in enumerate(st.session_state.flashcards):
+                
+                card_id = f"card_{idx}"
+                is_flipped = card_id in st.session_state.flipped_cards
+                
+                # Create flashcard HTML
+                if not is_flipped:
+                    # Show front
+                    st.markdown(f"""
+                    <div class="flashcard">
+                        <div style="text-align: center; padding: 2rem 0;">
+                            <div style="font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Card {idx + 1} - Front</div>
+                            <div style="font-size: 1.2rem; font-weight: 500; color: #ffffff; line-height: 1.6;">
+                                {card['front']}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    # Show back
+                    st.markdown(f"""
+                    <div class="flashcard" style="background: #1f1f1f;">
+                        <div style="text-align: center; padding: 2rem 0;">
+                            <div style="font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Card {idx + 1} - Back</div>
+                            <div style="font-size: 1rem; color: #d0d0d0; line-height: 1.6;">
+                                {card['back']}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Flip button
+                col_flip1, col_flip2, col_flip3 = st.columns([1, 1, 1])
+                with col_flip2:
+                    if st.button(
+                        "Flip Card" if not is_flipped else "Flip Back",
+                        key=f"flip_{idx}",
+                        use_container_width=True
+                    ):
+                        if is_flipped:
+                            st.session_state.flipped_cards.discard(card_id)
+                        else:
+                            st.session_state.flipped_cards.add(card_id)
+                        st.rerun()
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+
+
+    # ==================================================
+    # FEATURE 4: SUMMARY GENERATOR
+    # ==================================================
+
+    with tab4:
+
+        st.header(
+            "Content Summary"
+        )
+
+        st.markdown(
+            "<p style='opacity: 0.7; font-weight: 300;'>Generate a concise summary of your study material.</p>",
+            unsafe_allow_html=True
+        )
+
+        summary_length = st.radio(
+            "Summary Length",
+            ["Short", "Medium", "Long"],
+            index=1,
+            horizontal=True,
+            key="summary_length"
+        )
+
+        if st.button(
+            "Generate Summary",
+            key="summary_button"
+        ):
+
+            context = "\n\n".join(
+                st.session_state.chunks
+            )
+
+            try:
+                with st.spinner(
+                    "Creating your summary..."
+                ):
+
+                    summary = generate_summary(
+                        context,
+                        st.session_state.keywords,
+                        summary_length.lower()
+                    )
+                    
+                    st.session_state.summary = summary
+                    st.success("Summary generated successfully")
+                    
+            except Exception as e:
+                st.error(f"Error generating summary: {str(e)}")
+
+        # Display summary if it exists
+        if 'summary' in st.session_state:
+            
+            st.markdown("---")
+            
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
+            st.markdown(st.session_state.summary)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # Download button
+            st.download_button(
+                label="Download Summary",
+                data=st.session_state.summary,
+                file_name=f"summary_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+
+
+    # ==================================================
+    # FEATURE 5: KEY TERMS & DEFINITIONS
+    # ==================================================
+
+    with tab5:
+
+        st.header(
+            "Key Terms & Definitions"
+        )
+
+        st.markdown(
+            "<p style='opacity: 0.7; font-weight: 300;'>Extract important terms and their definitions.</p>",
+            unsafe_allow_html=True
+        )
+
+        num_terms = st.slider(
+            "Number of Terms",
+            min_value=5,
+            max_value=25,
+            value=15,
+            key="num_terms"
+        )
+
+        if st.button(
+            "Extract Key Terms",
+            key="terms_button"
+        ):
+
+            context = "\n\n".join(
+                st.session_state.chunks
+            )
+
+            try:
+                with st.spinner(
+                    "Extracting key terms and definitions..."
+                ):
+
+                    terms = extract_key_terms(
+                        context,
+                        st.session_state.keywords,
+                        num_terms
+                    )
+                    
+                    if terms:
+                        st.session_state.key_terms = terms
+                        st.success(f"Extracted {len(terms)} key terms")
+                    else:
+                        st.error("Failed to extract terms. Please try again.")
+                        
+            except Exception as e:
+                st.error(f"Error extracting terms: {str(e)}")
+
+        # Display terms if they exist
+        if 'key_terms' in st.session_state and st.session_state.key_terms:
+            
+            st.markdown("---")
+            
+            # Display as glossary
+            for idx, term_obj in enumerate(st.session_state.key_terms):
+                
+                # Importance badge
+                importance = term_obj.get('importance', 'medium')
+                badge_color = {
+                    'high': '#4caf50',
+                    'medium': '#ff9800',
+                    'low': '#2196f3'
+                }.get(importance, '#888')
+                
+                st.markdown(f"""
+                <div class="content-card">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <h3 style="color: #ffffff !important; margin: 0 !important; border: none !important; padding: 0 !important;">{term_obj['term']}</h3>
+                        <span style="background: {badge_color}; color: white; padding: 0.25rem 0.75rem; border-radius: 2px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{importance}</span>
+                    </div>
+                    <p style="margin: 0; line-height: 1.6;">{term_obj['definition']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # Download button
+            terms_text = "\n\n".join([
+                f"{term['term']}\n{term['definition']}"
+                for term in st.session_state.key_terms
+            ])
+            
+            st.download_button(
+                label="Download Key Terms",
+                data=terms_text,
+                file_name=f"key_terms_{uploaded_file.name.replace('.pdf', '')}_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+
+
+    # ==================================================
+    # FEATURE 6: AI STUDY ASSISTANT
+    # ==================================================
+
+    with tab6:
 
         st.header(
             "Ask Questions"
