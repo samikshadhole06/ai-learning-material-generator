@@ -37,3 +37,4 @@ TOP_K = 4
 
 # Gemini model configuration
 GEMINI_MODEL = "gemini-3.6-flash"
+FALLBACK_MODELS = ["gemini-1.5-flash", "gemini-pro"]  # Fallback models if primary fails
