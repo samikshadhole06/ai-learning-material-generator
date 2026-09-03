@@ -4,7 +4,7 @@ import time
 from config import GEMINI_API_KEY, GEMINI_MODEL
 
 
-def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
+def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=2):
     """
     Send a prompt to Gemini and return the response using REST API.
     Works with new AQ. format API keys (authorization keys).
@@ -14,7 +14,7 @@ def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
         prompt (str): The prompt to send to Gemini
         temperature (float): Controls randomness (0.0-1.0)
         max_tokens (int): Maximum output tokens (default 8000 for longer responses)
-        retries (int): Number of retry attempts for failed requests
+        retries (int): Number of retry attempts for failed requests (reduced to 2)
         
     Returns:
         str: Generated response text
@@ -23,7 +23,7 @@ def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
     for attempt in range(retries):
         try:
             # Use the REST API endpoint - try gemini-1.5-flash as fallback
-            models_to_try = [GEMINI_MODEL, "gemini-1.5-flash", "gemini-pro"]
+            models_to_try = ["gemini-1.5-flash", "gemini-pro"]  # Use stable models first
             
             for model in models_to_try:
                 try:
@@ -49,7 +49,7 @@ def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
                         }
                     }
                     
-                    response = requests.post(url, headers=headers, json=payload, timeout=60)
+                    response = requests.post(url, headers=headers, json=payload, timeout=90)
                     
                     # If successful, return the result
                     if response.status_code == 200:
@@ -61,10 +61,10 @@ def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
                         else:
                             continue  # Try next model
                     
-                    # If 503 or 429, retry with exponential backoff
+                    # If 503 or 429, wait and retry
                     elif response.status_code in [503, 429]:
                         if attempt < retries - 1:
-                            wait_time = (2 ** attempt) + 1  # Exponential backoff: 2, 5, 9 seconds
+                            wait_time = 3 + (attempt * 2)  # 3, 5 seconds
                             time.sleep(wait_time)
                             break  # Break inner loop to retry
                         else:
@@ -74,27 +74,25 @@ def generate_response(prompt, temperature=0.7, max_tokens=8000, retries=3):
                         
                 except requests.exceptions.Timeout:
                     if attempt < retries - 1:
-                        time.sleep(2)
+                        time.sleep(3)
                         continue
                     else:
-                        return f"Error: Request timed out after {retries} attempts"
-                except requests.exceptions.RequestException as e:
+                        continue  # Try next model
+                except requests.exceptions.RequestException:
                     continue  # Try next model
             
             # If we get here and it's not the last attempt, retry
             if attempt < retries - 1:
-                time.sleep(2)
+                time.sleep(3)
                 continue
             else:
-                return "Error: Unable to generate response. The AI service is currently experiencing high demand. Please try again in a few moments."
+                return "Error: The AI service is currently busy. Please wait a moment and try again."
                 
         except Exception as e:
             if attempt < retries - 1:
-                time.sleep(2)
+                time.sleep(3)
                 continue
             else:
-                error_msg = f"Gemini API Error: {str(e)}"
-                print(error_msg)
-                return f"Error generating response: {str(e)}"
+                return f"Error: Unable to connect to AI service. Please try again."
     
-    return "Error: Unable to generate response after multiple attempts. Please try again later."
+    return "Error: Service temporarily unavailable. Please try again in a few moments."
