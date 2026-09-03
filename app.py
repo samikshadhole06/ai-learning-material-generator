@@ -550,6 +550,11 @@ if uploaded_file:
                 st.session_state.index = (
                     index
                 )
+                
+                # Clear any previously generated content when new file is uploaded
+                for key in ['generated_notes', 'quiz_questions', 'flashcards', 'summary', 'key_terms']:
+                    if key in st.session_state:
+                        del st.session_state[key]
 
             st.success(
                 "Study material processed successfully"
@@ -571,6 +576,12 @@ if (
     "chunks"
     in st.session_state
 ):
+    
+    # Show rate limit info
+    st.info(
+        "💡 Tip: Generate one feature at a time and wait 15-20 seconds between each to avoid rate limits. "
+        "If you see an error, wait 30-60 seconds before trying again."
+    )
 
     col1, col2, col3 = st.columns(3)
 
@@ -660,30 +671,39 @@ if (
         
         if generate_btn:
 
-            # Use chunks as context
-            context = "\n\n".join(
-                st.session_state.chunks
-            )
+            # Check if notes were already generated for this file
+            if 'generated_notes' in st.session_state:
+                st.info("Notes already generated for this file. Showing cached version. Upload a new file to generate different notes.")
+            else:
+                # Use chunks as context
+                context = "\n\n".join(
+                    st.session_state.chunks
+                )
 
-            try:
-                with st.spinner(
-                    "Generating your personalized study notes..."
-                ):
+                try:
+                    with st.spinner(
+                        "Generating your personalized study notes..."
+                    ):
 
-                    notes = generate_notes(
-                        context,
-                        st.session_state.keywords,
-                        learning_level,
-                        study_mode
-                    )
-                    
-                    # Store notes in session state
-                    st.session_state.generated_notes = notes
-
-                st.success("Notes generated successfully")
-                
-            except Exception as e:
-                st.error(f"Error generating notes: {str(e)}")
+                        notes = generate_notes(
+                            context,
+                            st.session_state.keywords,
+                            learning_level,
+                            study_mode
+                        )
+                        
+                        # Check if error message
+                        if notes.startswith("Error:"):
+                            st.error(notes)
+                            st.warning("⏰ Gemini API rate limit reached. Please wait 30-60 seconds and try again.")
+                        else:
+                            # Store notes in session state
+                            st.session_state.generated_notes = notes
+                            st.success("Notes generated successfully")
+                        
+                except Exception as e:
+                    st.error(f"Error generating notes: {str(e)}")
+                    st.warning("⏰ Please wait 30-60 seconds before trying again.")
         
         # Display and download options if notes exist
         if 'generated_notes' in st.session_state:
